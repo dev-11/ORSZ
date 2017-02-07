@@ -1,0 +1,36 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\title{Osztott rendszerek szintézise\\1. zhig használt definíciók}
+\begin{document}
+\ \\
+$P \rightarrow Q \equiv \neg P \lor Q\\\\
+P \triangleright_S Q \equiv P \land \neg Q \Rightarrow lf(S,P \lor Q) \equiv lf(s_1, P \lor Q) \land lf(s_2, P \lor Q)\\\\
+P \mapsto_S Q  \equiv P \triangleright_S Q \land (((P \land \neg Q \Rightarrow lf(s_1,Q)) \lor (P \land \neg Q \Rightarrow lf(s_2,Q)))\\\\
+P \hookrightarrow_S Q$
+\begin{enumerate}
+\item[]\ \\
+$P \hookrightarrow_S Q\ \ ,\  Q \Rightarrow R$\\
+-------------------------- Jobb oldal gyengítése\\
+\hspace*{0.9cm} $P \hookrightarrow_S R$
+\item[]\ \\
+$P \hookrightarrow_S Q\ \ ,\  R \Rightarrow P$\\
+-------------------------- Bal oldal erősítése\\
+\hspace*{0.9cm} $P \hookrightarrow_S Q$
+\item[]\ \\
+$P \hookrightarrow_S Q\ \ ,\  Q\ \triangleright_S \downarrow$\\
+-------------------------- Stabillal metszés\\
+\hspace*{0.1cm}$P \land K \hookrightarrow_S Q \land K$
+\end{enumerate}
+\textbf{masodik ZH-hoz}:\newline\newline
+%%Q \in INIT_h \ \ \ \ \ 
+$legyen \ K \in inv_s(\land INIT_h)\\\\
+P \triangleright_h Q \longrightarrow P \land K \triangleright_s Q \land K\\\\
+P \mapsto_h Q \longrightarrow P \land K \mapsto_s Q \land K\\\\
+P \hookrightarrow_h Q \longrightarrow P \land K \hookrightarrow_s Q \land K\\\\
+P \in inv_h \longrightarrow P \land K \in inv_s(\land INIT_h)\\\\
+FP_h \Rightarrow R \longrightarrow \varphi_s \land K \Rightarrow R\\\\
+Q \in TERM_h \longrightarrow sp(s_0, Q) \hookrightarrow_s \varphi_s\\\
+$
+\end{document}

@@ -1,0 +1,56 @@
+%\documentclass{minimal}
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{tikz}
+\usetikzlibrary{arrows}
+\tikzstyle{level 1}=[sibling distance=4cm]
+\tikzstyle{level 2}=[sibling distance=1.5cm]
+\tikzstyle{level 3}=[sibling distance=.5cm]
+\title{Osztott rendszerek szintézise\\5. tétel}
+\begin{document}
+%\maketitle
+
+\section*{Nyitott specifikáció és aszinkronitás transzformáció.}
+Néha jól jön, ha szétosztjuk a feladatot, mert a párhuzamos feldolgozás hatékonyabb.
+\begin{align*}
+S_1 = \lbrace se:x:=x\oplus d,\ ha\ bu\parallel ..., re: vs,x:=f(vs,x),g(x),\ ha\ b(x) \land bv \parallel ... \rbrace
+\end{align*}
+ahol $bu$ egy $x$-től nem függő logikai feltéltel $x$ pedig közös változó, ezért a folyamatok óhatatlanul váratják egymást (ha legfeljebb egy közös változó legfeljebb egyszer szerepel az értékadásokban).
+
+Át szeretnénk alakítani valami jobbra, ehhez az alábbi három feltételnek kell teljesülnie:
+\begin{itemize}
+\item $b(x) \Rightarrow b(x\oplus d)$ -- monotonitás\\
+$x$ egy adott állapotban van, nem függhet a feldolgozási képessége és hajlandósága attól, hogy az olvasó lassabb volt mint a küldő és közben nőtt $x$ információtartalma.
+\item $b(x) \Rightarrow (f(vs,x) = f(vs,x\oplus d))$ -- ha én nem használtam fel $x$-et, akkor ha jött közben új adat, akkor se változzon.
+\item $b(x) \Rightarrow (g(x\oplus d) = g(x) \oplus d)$ -- kommutativitás. Az a két lépés, hogy törlök és hogy jön az új, felcserélhető.
+\end{itemize}
+Megjegyzés: ez most nincs benne a jegyzetben, lehet félreértem, de így gondolom én ezt:
+$se $a küldő folyamat, ez ha éppen olyanja van ($bu$), ráír $x$ csatornára egy $d$ adatot. $re$ a fogadó folyamat, ez, ha a csatorna olvasható ($b(x)$) és ha épp ráér fogadni ($bv$), akkor fogad. Ez azt jelenti, hogy a saját kis feldolgozott változóját ($vs$) módosítja az aktuális legfölső értékével ($f(vs,x)$), majd $x$-ből törli ezt az elemet ($g(x)$).
+
+Ha ezek teljesülhetnek, a fenti program átalakítható így:
+\begin{align*}
+    S_2 = \left\{ \begin{array}{l}
+        se:x,c := x \oplus d,(c;d)\ ha\ bu \parallel \dots, \\
+        re:vs,x,y := fs(vs,y),g(x),g(y)\ ha\ b(y) \land bv \parallel \dots,\\
+        ch:c,y:=lorem(c),y\oplus c.lov\ ha\ |c| > 0
+    \end{array}\right\}
+\end{align*}
+
+Itt $c$ egy új csatornaváltozó, valamint $y$ is, meg bejött még az új $b(y)$ feltétel, ami nyilván $y$-tól függ. Csak $x$ az ami $se $ és $re$ között osztott változó, viszont mivel az $y$-re késleltetve jövő adatot használom mindenhol ($x$ csak magára hivatkozik, senki
+se használja őt, hanem $y$-t), ezért $x$-et akár ki is törölhetném. $x$ innentől csak a könnyebb bizonyíthatóság miatt van, mint segédváltozó, de a lényegi kommunikációt aszinkron, késleltetett módon $c$ és $y$ intézi.
+
+A program $\mapsto$ tulajdonságai így nem maradnak meg, de a többi ($\triangleright_s, \hookrightarrow_s,inv_s$) igen. (amúgy is csak $\hookrightarrow$ számításához szoktuk használni, amúgy nem fontos kikötés az $\mapsto$.)
+
+Egész pontosan az alábbi módon maradnak meg a tulajdonságok. Ha az eredeti programban $P$ és $Q$ között $\triangleright_s$ vagy $\hookrightarrow_s$ kapcsolat volt, akkor az új programban $P'$ és $Q'$ lesz. Hasonlóan, ha $P$ invariáns volt, akkor $P'$ lesz az. $P'$ pedig így számítható $P$-ből ($Q'$ hasonlóan):
+\begin{align*}
+P' = P^{x\leftarrow y\oplus c}
+\end{align*}
+hiszen lényegében erre cseréltem ki $x$-et.
+Amúgy még van egy invariáns az új, átalakított programban, ami pont erről szól:
+\begin{align*}
+(x=y\oplus c)\in inv_{s_2}
+\end{align*}
+Ezt a változtatást sok processzoron érdemes meghúzni, így a rendszerben kevesebben fognak várakozni. Ára ennek, egy új csatornaváltozó bevezetése vót.
+\end{document}

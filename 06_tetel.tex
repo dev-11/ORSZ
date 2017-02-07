@@ -1,0 +1,89 @@
+ccdr\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usetikzlibrary{arrows}
+\title{Osztott rendszerek szintézise\\6. tétel}
+\begin{document}
+%\maketitle
+
+\section*{Programok leképezése különbözo architektúrákra, programsémák}
+A különbségeket a folyamatok kommunikációi jelentik elsősorban.
+\subsection*{Architektúrák}
+\subsubsection*{Aszinkron, megosztott memóriaarchitektúra}
+%\begin{tikzpicture}[scale=2]
+%    \tikzstyle{ann} = [draw=none,fill=none,right]
+%    \matrix[nodes={draw, ultra thick, fill=blue!20},row sep=0.3cm,column sep=0.5cm] {
+%    \node[draw=none,fill=none] {Plain node}; &
+%    \node[rectangle] {Rectangle}; &
+%    \node[circle] {Circle};\\
+%    };
+%\end{tikzpicture}
+%
+%\begin{tikzpicture}[%
+%  node distance=1cm,
+%  noname/.style={%
+%    circle,
+%    minimum size=3em,
+%    draw
+%  }
+%]
+%  \node[noname] (1)                                             {1};
+%  \node[noname] (2) [below=of 1]                                {2};
+%  \node[noname] (4) [node distance=1cm and 3mm,below left=of 2] {4};
+%  \node[noname] (3) [left=of 4]                                 {3};
+%  \node[noname] (5) [below=of 4]                                {5};
+%  \node[noname] (6) [node distance=2cm,right=of 5]              {6};
+%
+%  \path (1) edge                   node {} (2)
+%        (2) edge                   node {} (3)
+%        (2) edge                   node {} (4)
+%        (2) edge                   node {} (6)
+%        (3) edge                   node {} (5)
+%        (4) edge                   node {} (5)
+%        (5) edge [bend right=20pt] node {} (2);
+%\end{tikzpicture}
+
+Az $M$ memória közös, a "rekeszeit" sorszámaikkal érjük el. Adottak a $p_i$ processzorok, mindnek külön $c_i$ órajele van. A program legyen $S = ( s_0, \lbrace s_1,\dots s_m \rbrace)$. Minden $S$-beli $s_i$ utasításhoz rendeljünk egy processzort, ami őt futtatja (nyilván egy processzor többet is futtathat): $s_i \rightarrow p_j$. A processzor ezeket ismételgeti naphosszat.
+
+Ha $v_k\ s_i$ baloldali változója (azaz aki értéket kap a folyamatban), (azaz ha $v_k \in LV(s_i)$) akkor az $s_i$-hez rendelt $p_j$ olyan, hogy joga van írni azt az $m_z$ memóriacellát, ahol $v_k$ van.És a jobboldali változókra pedig hasonlóan csak olvasásra.
+\subsubsection*{Osztott rendszer}
+Itt szintén minden processzorhoz tartozik külön órajel, na de még külön memória is. Egymáséiba nem látnak bele. A kommunikáció itt csatornaváltozókon keresztül valósul meg. Mindenkinek vannak tehát $v \in V$ saját változói és akad néhány $c \in Ch$ csatorna. Esetleg a csatornákhoz van puffer (sor). Két processzor között fizikailag egy csatorna lehet maximum.
+\subsubsection*{Szinkron, megosztott rendszer}
+Egy, közös órajele van a processzoroknak, a memória is közös. Írhatnak ketten ugyanoda, de csak ugyanazt. Olvasni szabad többnek is egyszerre. Hosszú, vektorszerű értékadások esetén használatos, mely sok-sok változót érint.
+\subsection*{Programsémák}
+\subsubsection*{Read-only}
+Egy program minden utasítása egy processzorhoz tartozik (ugyanakkor egy processzorhoz több utasítás is tartozhat). Egy ilyen program akkor van a read-only sémában, ha minden változójára igaz, hogy legfeljebb egy processzorhoz tartozó utasítások baloldalán fordul elő. (max egy processzor írhasssa)
+
+\begin{itemize}
+\item finom szemcsézettség
+legfeljebb egy idegen változó legfeljebb egyszer van utasítás jobboldalán (baloldalon nem is lehet, mert readonly, mindenkit csak egy processzor írhat, a többi az "idegen") Példa:
+\begin{align*}
+s: x&:= x+y+z \parallel y := y+1 \\
+s': z&:= \dots
+\end{align*}
+Itt egy darab idegen változó van (a $z$). Ha pl $s'$-ben $y$ is értéket kap, akkor az már nem jó.
+\item durva szemcsézettség
+Továbbra is igaz, hogy minden változót legfeljebb egy processzor ír, de most egynél több idegen változó is megengedhető. "Elkérni" nem lehet változót, mert akkor holtpont lesz a blokkolások miatt.
+\begin{align*}
+s: x&:= x+y+z \parallel y := y+1 \\
+s': z&:= \dots \\
+s'': y&:= y+1
+\end{align*}
+\end{itemize}
+$\sim$ aszinkron megosztott rendszer architektúra
+\subsubsection*{Közös változó séma}
+
+A $v$ változó lokális $p$ processzorra, ha csak a $p$-hez rendelt értékadásokban fordul elő (tehát máshol még olvasásra se). Akkor van ebben a sémában, ha minden értékadásra teljesül, hogy legfeljebb egy nem lokális változó van benne (akár baloldalon, akár jobboldalon… összesen) (max egy processzor nyúlhat hozzá) Ha a fenti két séma kikötései nem teljesülnek, akkor rögzített sorrendben kell az előkerülő nemlokális/idegen változókat lefoglalni, ha el akarjuk kerülni a holtpontot.\\
+$\sim$ osztott rendszer architektúra
+\subsubsection*{Egyetlen utasítás séma}
+Szinkron architektúrán jól kezelhető. A program így néz ki: $S = (s_0, \lbrace \dots, \underset{i}{\parallel} v_i := \dots, \dots \rbrace)$. Tehát mindegyik egy-egy vektorszerű értékadást csinál. Ekkor ha mondjuk ez a programunk: $S = (s_0, \lbrace x:= f(x,y) \parallel y:= g(x,y)\rbrace)$, akkor valamekkora párhuzamosság (aszinkronitás) megengedett (tehát ilyen architektúrán is tud működni (?)), elég csak bizonyos pontokon bevárni egymást pl, amíg nincs meg $f(x,y)$ kiszámítása $x_1$-re, addig még $g$ se foglalkozzon $y_2$-vel és viszont. De ezen kívül már házon belül lerendezhetik az ütemezést.
+\subsubsection*{Egyenlőségi séma}
+Egyenlőségi séma.\\
+funkcionális programozás\\
+definiált fv-ek definícióinak sorrendje (?)\\
+példa rá 7/a tétel\\
+TODO ábrák
+\end{document}

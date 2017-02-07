@@ -1,0 +1,71 @@
+%\documentclass{minimal}
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{tikz}
+\usetikzlibrary{arrows}
+\tikzstyle{level 1}=[sibling distance=4cm]
+\tikzstyle{level 2}=[sibling distance=1.5cm]
+\tikzstyle{level 3}=[sibling distance=.5cm]
+\title{Osztott rendszerek szintézise\\4. tétel}
+\begin{document}
+%\maketitle
+
+\section*{Üzenetküldés szemantikája}
+
+\subsection*{Csatornaváltozók}
+
+Párhuzamos és elosztott rendszereket gyakran írunk le folyamathálózatok formájában. A folyamatokat dobozokkal jelöljük, közöttük üzenetküldéssel teremtünk kapcsolatot. A csatornaváltozók használatával egyirányú aszinkron kommunikációt valósíthatunk meg. Van egy feladó folyamat és egy vagy több fogadó. Feltételezzük, hogy a csatorna biztonságos, üzenetek nem vésznek el út közben és nem is "keletkeznek", valamint a küldött üzeneteket a küldési sorrendben lehet a másik oldalon leolvasni. Épp ezért a csatornára úgy tekintünk, mint a sor
+adatszerkezetre.
+
+A csatornán a még fel nem dolgozott üzeneteket tárolni tudjuk (mivel aszinkron). Ez itt egy végtelen kapacitású sor, a valóságban persze mindig van valami korlát (a valóságban ha ezt a korlátot elérjük, a folyamat blokkolódik). Ezt a sort hívjuk mondjuk -nek. Tartozik hozzá még egy sor, a történetváltozó, ennek jelölése: $\overline{x}$. A történetváltozó tartalmaz minden valaha $x$-re küldött üzenetet (a küldésnek megfelelő sorrendben), innen nem lehet eltávolítani se az elemeket. Ez az implementációban sehol se szerepel(het), de a csatornát használó programok specifikációjában jól jön egy ilyen absztrakt segédváltozó.
+\\\\
+Jelölés: az $(x, \overline{x}) \in Ch(Int)$ pár egy egész típusú adatokat szállító csatorna.
+\\\\
+Műveletek:
+\begin{itemize}
+\item inicializálás: $x:=<>$
+\item üzenet küldése: $x:=hiext(x,e)$ vagy $x:=x;e$
+\item üzenet olvasása: $x.lov$ feltéve $x \neq <>$
+\item üzenet eltávolítása: $x:=lorem(x)$ feltéve $x \neq <>$
+\item üres-e: $x = <>$
+\item sor mérete: $length(x)$ vagy $|x|$
+\end{itemize}
+Itt csupán $x$-ként hivatkoztunk magára a csatornára, a háttérben persze $\overline{x}$ is szerepet kap. A fenti műveletek jelentését megadhatjuk az $lf$-jükkel, és akkor látjuk azt is, milyen hatással vannak a műveletek $\overline{x}$-re.
+\begin{itemize}
+\item $lf(x:=<>,R) = R^{x\leftarrow<>,\overline{x}\leftarrow<>}$, tehát inicializáljuk az $x$-hez tartozó történetváltozót is.
+\item $lf(x:=x;e,R) = R^{x \leftarrow{x} ; e, \overline{x} \leftarrow \overline{x} ; e}$, tehát a történetváltozóhoz is hozzáírjuk $e$-t
+\item $lf(x:=lorem(x), ha\ x\neq <>,R) = x\neq <> \rightarrow R ^{x\leftarrow lorem(x)} \land x = <> \rightarrow R$, a történetváltozó változatlan.
+\end{itemize}
+\subsection*{Szinkron kommunikáció}
+Egy $se$ küldő folyamat több $re_i$ fogadónak is küld. $i \in [1..n] : x \rightarrow y(i)$
+\\
+\\
+Modellje ($se \rightarrow re_i$) eset, sok fogadó:
+\\
+\begin{align*}
+\parallel y(i) := x,\ ha\ \underset{i \in [1..n]}{\land} (y(i)=0 \land x \neq 0) \parallel x:=0
+\end{align*}
+Tehát $x$ küld minden $y$-nak, és ezzel egyidejűleg nullázza magát. De feltétel, hogy minden $y$ üres kell legyen, ezért sokáig fog blokkolni, gyakorlatilag szekvecializálódik a párhuzamos program.
+\\
+\\
+($se \rightarrow re$ eset, egy fogadó):
+\begin{align*}
+x,y:=0, x\ ha\ x=0 \land x \ne 0
+\end{align*}
+Elvárásaink: küldőnél $x \neq 0$ stabil, fogadóknál $y(i) =0$ stabil.\\
+Kérdés: csatornaváltozók vagy közös memória? Ez nem kérdés, mert a gyakorlatban ez a kettő ugyanarra vezet.\\
+Pufferváltozó ($u$) használatával aszinkronitás keletkezik, a küldő továbbhaladhat, azaz $x$-re tölthet anélkül, hogy olvasva lenne, addig $u$-ban pihen az adat. Annyi szinkronitás van (ugye ebből minél kevesebb kell), hogy amíg az egyik írja az $u$-t, addig a másik nem tudja.
+\begin{align*}
+se:x,u:=0,x\ ha\ u=0 \land x \neq 0\ \Box\ re: u,y:=0,u\ ha\ y=0 \land u \neq 0
+\end{align*}
+Ez a transzformáció megtartja a program lényegi tulajdonságait (pl. minek felel meg), de mégis megszüntette a szinkronitást.
+
+Amúgy, ha nincsenek osztott változóink, csak csatik, akkor az egyes folyamatok közötti kapcsolat jól ellenőrizhetővé válik.
+Ezt fogalmazza meg a lokalitás tétel:
+\begin{itemize}
+\item Ha egy $P$ állítás változói között csak $P_1$ folyamat lokális változói, illetve $P_1$ bemenő csatornaváltozói vannak, akkor a $P$ állítás stabil a többi folyamatban.
+\item Ha $P \Rightarrow P^{\overline{x}\leftarrow\overline{x};e}$ és $V(P)=\lbrace\overline{x}\rbrace$, akkor $P$ stabil a teljes folyamathálózatban.
+\end{itemize}
+\end{document}
